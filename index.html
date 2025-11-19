@@ -8,7 +8,7 @@
 <div id="content">Loading...</div>
 
 <script>
-fetch("https://raw.githubusercontent.com/wiki/USER/REPO/문서명.md")
+fetch("https://raw.githubusercontent.com/wiki/Shiroko4592/LinguaStudy/대문.md")
   .then(res => res.text())
   .then(md => {
     document.getElementById("content").innerHTML = marked.parse(md);
