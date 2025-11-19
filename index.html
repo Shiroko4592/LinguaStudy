@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+<div id="content">Loading...</div>
+
+<script>
+fetch("https://raw.githubusercontent.com/wiki/USER/REPO/문서명.md")
+  .then(res => res.text())
+  .then(md => {
+    document.getElementById("content").innerHTML = marked.parse(md);
+  });
+</script>
+</body>
+</html>
