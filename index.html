@@ -1,18 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="utf-8">
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinguaStudy</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+    #sidebar {
+      width: 250px;
+      background: #f4f4f4;
+      padding: 20px;
+      height: 100vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+      border-right: 1px solid #ddd;
+    }
+    #content {
+      flex: 1;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      height: 100vh;
+    }
+    a {
+      color: #333;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .page-link {
+      display: block;
+      margin-bottom: 8px;
+    }
+  </style>
 </head>
 <body>
-<div id="content">Loading...</div>
+  <div id="sidebar"><h3>문서 목록</h3><div id="toc">Loading...</div></div>
+  <div id="content">불러오는 중...</div>
 
-<script>
-fetch("https://raw.githubusercontent.com/wiki/Shiroko4592/LinguaStudy/대문.md")
-  .then(res => res.text())
-  .then(md => {
-    document.getElementById("content").innerHTML = marked.parse(md);
-  });
-</script>
+  <script>
+    const USER = "Shiroko4592";
+    const REPO = "LinguaStudy";
+
+    const RAW_BASE = `https://raw.githubusercontent.com/wiki/Shiroko4592/LinguaStudy`;
+    const API_BASE = `https://api.github.com/repos/Shiroko4592/LinguaStudy.wiki/contents`;
+
+    async function loadPage(page) {
+      document.getElementById("content").innerHTML = "Loading...";
+      const url = `${RAW_BASE}/${page}.md`;
+      const res = await fetch(url);
+      const md = await res.text();
+      document.getElementById("content").innerHTML = marked.parse(md);
+    }
+
+    async function loadTOC() {
+      const res = await fetch(API_BASE);
+      const data = await res.json();
+
+      const toc = document.getElementById("toc");
+      toc.innerHTML = "";
+
+      data.forEach(file => {
+        if (file.name.endsWith(".md")) {
+          const name = file.name.replace(/\.md$/, "");
+          const link = document.createElement("a");
+          link.textContent = name;
+          link.href = `#${name}`;
+          link.className = "page-link";
+          link.onclick = () => loadPage(name);
+          toc.appendChild(link);
+        }
+      });
+    }
+
+    window.addEventListener("hashchange", () => {
+      const page = location.hash.substring(1);
+      if (page) loadPage(page);
+    });
+
+    loadTOC().then(() => {
+      const start = location.hash.substring(1) || "Home";
+      loadPage(start);
+    });
+  </script>
 </body>
 </html>
