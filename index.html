@@ -46,16 +46,22 @@
   <div id="content">불러오는 중...</div>
 
   <script>
+    // GitHub Wiki 설정 (선택사항)
+    const USE_GITHUB_WIKI = false; // true로 설정하면 GitHub Wiki 사용
     const USER = "Shiroko4592";
     const REPO = "LinguaStudy";
 
-    // FIXED RAW BASE URL
-    const RAW_BASE = `https://raw.githubusercontent.com/${USER}/${REPO}.wiki/master`;
+    // 로컬 위키 페이지 목록
+    const LOCAL_PAGES = ["Home", "About", "Tutorial"];
+
+    const RAW_BASE = USE_GITHUB_WIKI 
+      ? `https://raw.githubusercontent.com/${USER}/${REPO}.wiki/master`
+      : "./wiki";
     const API_BASE = `https://api.github.com/repos/${USER}/${REPO}.wiki/contents`;
 
     async function loadPage(page) {
       const content = document.getElementById("content");
-      content.innerHTML = "Loading...";
+      content.innerHTML = "불러오는 중...";
       
       try {
         const url = `${RAW_BASE}/${page}.md`;
@@ -69,20 +75,37 @@
         content.innerHTML = marked.parse(md);
       } catch (error) {
         console.error("Error loading page:", error);
-        content.innerHTML = `<h2>Error</h2><p>Unable to load the page "${page}". The wiki page may not exist or may be unavailable.</p>`;
+        content.innerHTML = `<h2>오류</h2><p>"${page}" 페이지를 불러올 수 없습니다. 페이지가 존재하지 않거나 사용할 수 없습니다.</p>`;
       }
     }
 
     async function loadTOC() {
       const toc = document.getElementById("toc");
       
+      // 로컬 모드 사용
+      if (!USE_GITHUB_WIKI) {
+        toc.innerHTML = "";
+        LOCAL_PAGES.forEach(pageName => {
+          const link = document.createElement("a");
+          link.textContent = pageName;
+          link.href = `#${pageName}`;
+          link.className = "page-link";
+          link.onclick = (e) => {
+            e.preventDefault();
+            location.hash = pageName;
+          };
+          toc.appendChild(link);
+        });
+        return;
+      }
+
+      // GitHub Wiki 모드
       try {
         const res = await fetch(API_BASE);
         const data = await res.json();
 
         toc.innerHTML = "";
 
-        // Check if data is an array (successful response)
         if (!Array.isArray(data)) {
           throw new Error("Failed to fetch wiki pages");
         }
@@ -94,19 +117,16 @@
             link.textContent = name;
             link.href = `#${name}`;
             link.className = "page-link";
-
-            // FIXED CLICK HANDLER (prevent double load)
             link.onclick = (e) => {
               e.preventDefault();
               location.hash = name;
             };
-
             toc.appendChild(link);
           }
         });
       } catch (error) {
         console.error("Error loading TOC:", error);
-        toc.innerHTML = "<p>Unable to load wiki pages. Please check if the wiki exists.</p>";
+        toc.innerHTML = "<p>위키 페이지를 불러올 수 없습니다. 위키가 존재하는지 확인하세요.</p>";
       }
     }
 
