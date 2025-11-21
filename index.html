@@ -54,37 +54,60 @@
     const API_BASE = `https://api.github.com/repos/${USER}/${REPO}.wiki/contents`;
 
     async function loadPage(page) {
-      document.getElementById("content").innerHTML = "Loading...";
-      const url = `${RAW_BASE}/${page}.md`;
-      const res = await fetch(url);
-      const md = await res.text();
-      document.getElementById("content").innerHTML = marked.parse(md);
+      const content = document.getElementById("content");
+      content.innerHTML = "Loading...";
+      
+      try {
+        const url = `${RAW_BASE}/${page}.md`;
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+          throw new Error(`Failed to load page: ${res.status}`);
+        }
+        
+        const md = await res.text();
+        content.innerHTML = marked.parse(md);
+      } catch (error) {
+        console.error("Error loading page:", error);
+        content.innerHTML = `<h2>Error</h2><p>Unable to load the page "${page}". The wiki page may not exist or may be unavailable.</p>`;
+      }
     }
 
     async function loadTOC() {
-      const res = await fetch(API_BASE);
-      const data = await res.json();
-
       const toc = document.getElementById("toc");
-      toc.innerHTML = "";
+      
+      try {
+        const res = await fetch(API_BASE);
+        const data = await res.json();
 
-      data.forEach(file => {
-        if (file.name.endsWith(".md")) {
-          const name = file.name.replace(/\.md$/, "");
-          const link = document.createElement("a");
-          link.textContent = name;
-          link.href = `#${name}`;
-          link.className = "page-link";
+        toc.innerHTML = "";
 
-          // FIXED CLICK HANDLER (prevent double load)
-          link.onclick = (e) => {
-            e.preventDefault();
-            location.hash = name;
-          };
-
-          toc.appendChild(link);
+        // Check if data is an array (successful response)
+        if (!Array.isArray(data)) {
+          throw new Error("Failed to fetch wiki pages");
         }
-      });
+
+        data.forEach(file => {
+          if (file.name.endsWith(".md")) {
+            const name = file.name.replace(/\.md$/, "");
+            const link = document.createElement("a");
+            link.textContent = name;
+            link.href = `#${name}`;
+            link.className = "page-link";
+
+            // FIXED CLICK HANDLER (prevent double load)
+            link.onclick = (e) => {
+              e.preventDefault();
+              location.hash = name;
+            };
+
+            toc.appendChild(link);
+          }
+        });
+      } catch (error) {
+        console.error("Error loading TOC:", error);
+        toc.innerHTML = "<p>Unable to load wiki pages. Please check if the wiki exists.</p>";
+      }
     }
 
     window.addEventListener("hashchange", () => {
