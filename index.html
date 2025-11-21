@@ -49,8 +49,9 @@
     const USER = "Shiroko4592";
     const REPO = "LinguaStudy";
 
-    const RAW_BASE = `https://raw.githubusercontent.com/wiki/Shiroko4592/LinguaStudy`;
-    const API_BASE = `https://api.github.com/repos/Shiroko4592/LinguaStudy.wiki/contents`;
+    // FIXED RAW BASE URL
+    const RAW_BASE = `https://raw.githubusercontent.com/${USER}/${REPO}.wiki/master`;
+    const API_BASE = `https://api.github.com/repos/${USER}/${REPO}.wiki/contents`;
 
     async function loadPage(page) {
       document.getElementById("content").innerHTML = "Loading...";
@@ -74,7 +75,13 @@
           link.textContent = name;
           link.href = `#${name}`;
           link.className = "page-link";
-          link.onclick = () => loadPage(name);
+
+          // FIXED CLICK HANDLER (prevent double load)
+          link.onclick = (e) => {
+            e.preventDefault();
+            location.hash = name;
+          };
+
           toc.appendChild(link);
         }
       });
